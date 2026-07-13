@@ -1,6 +1,6 @@
 ---
 name: esql
-description: "Review Elastic ES|QL queries for Elasticsearch 9.4/9.5 compatibility, correctness, observability-metrics semantics, alert reliability, and query performance. Use when Codex is asked to inspect, critique, fix, or rewrite ES|QL pipelines, especially Elastic/Kibana alert queries or .esql files whose queries are separated by ===== lines."
+description: "Review Elastic ES|QL queries for Elasticsearch 9.4/9.5 compatibility, correctness, observability-metrics semantics, alert reliability, and query performance. Use when Codex is asked to inspect, critique, fix, or rewrite ES|QL pipelines, especially Elastic/Kibana alert queries embedded in .yaml/.yml files or standalone .esql queries."
 ---
 
 # ES|QL Query Review
@@ -8,9 +8,11 @@ description: "Review Elastic ES|QL queries for Elasticsearch 9.4/9.5 compatibili
 ## Workflow
 
 1. Identify the target Elasticsearch version. If the user says `9.4` or `9.5`, treat exact syntax and behavior as version-sensitive and verify against Elastic docs or a local Elastic checkout before making hard version claims.
-2. Split `.esql` files on separator lines made mostly of `=` characters. Treat each block as a separate query or example. In example files, text after `PROBLEM:` or `Problem:` is annotation, not ES|QL.
-3. Infer the query intent, source grain, time range, whether an alert runner injects the time window, metric type, grouping grain, and alert condition before judging the query.
-4. Read `references/review-checklist.md` for any non-trivial review. Read `good-examples.esql` and `bad-examples.esql` when matching this repository's preferred review style or adding new examples.
+2. Detect the input format before extracting queries:
+   - For `.yaml`/`.yml`, parse the YAML and review each ES|QL block scalar such as `query: |`. Read the surrounding alert metadata and comments before reviewing the query.
+   - For `.esql`, treat the file as one query unless the user explicitly identifies multiple queries.
+3. Infer the query intent, source grain, time range, whether the alert runner injects the time window, metric type, grouping grain, and alert condition before judging the query. In YAML alerts, use fields such as `name`, `description`, `severity`, `interval_sec`, and `time_window` as part of that contract.
+4. Read `references/review-checklist.md` for any non-trivial review. Read `good-examples.esql` and `bad-examples.esql` when matching this repository's preferred review style or adding new examples. In `bad-examples.esql`, text after `PROBLEM:` or `Problem:` is annotation, not ES|QL.
 5. Review in passes: syntax/version, source scope, filter placement, aggregation grain, metrics semantics, null and multivalue behavior, arithmetic, alert determinism, result limits, and output shape.
 6. Prefer findings over generic advice. Every finding should name the risky fragment, explain why it matters, and propose a concrete fix or safer rewrite.
 

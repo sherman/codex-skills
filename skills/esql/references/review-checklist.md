@@ -2,11 +2,20 @@
 
 Use this checklist to review Elastic ES|QL queries. Keep the final answer focused on issues that can change correctness, cost, or alert behavior.
 
-## Query Boundaries
+## Input Shape
 
-- Split files on lines made mostly of `=`. Blank space around separators is not meaningful.
-- A block may be a complete query, a fragment, or an annotated bad example. Do not treat `PROBLEM:` text as query text.
+- Treat a standalone `.esql` file as one query unless the user explicitly identifies multiple queries.
+- A supplied query may be complete or a fragment.
 - For fragments, review only the visible behavior and state missing assumptions.
+
+## YAML Alert Definitions
+
+- Alert queries may be embedded in `.yaml` or `.yml` files as block scalars, commonly `query: |`. Parse the YAML structure instead of extracting the query with ad hoc line matching.
+- Review every alert object independently when a file contains a list or multiple YAML documents.
+- Use surrounding fields and comments to infer intent and execution semantics. Important fields include `name`, `description`, `severity`, `interval_sec`, and `time_window`.
+- Treat a valid `time_window` as the externally injected query time bound. Do not report a missing `@timestamp` predicate when the alert runner applies this window.
+- Check agreement between metadata and query text: hard-coded periods in comments or `details` must match `time_window`, and sustained-event logic must be possible at the configured `interval_sec` and metric publication cadence.
+- Keep YAML findings separate from ES|QL findings. Flag malformed YAML, a missing/empty `query`, invalid duration values, or contradictory scheduling metadata only when they affect alert execution or meaning.
 
 ## Source Scope and Filtering
 
