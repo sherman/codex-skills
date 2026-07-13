@@ -44,9 +44,15 @@ Use this checklist to review Elastic ES|QL queries. Keep the final answer focuse
 
 ## Time-Series Metrics
 
-- In this user's observability queries, metrics are generally emitted as deltas unless the query comments or field contract say otherwise. Do not flag `SUM(metric)` over a delta metric as a counter/gauge mistake. Still check duplicate ingestion, grouping grain, and whether the alert intentionally sums across all sources.
+- Identify the metric format before reviewing aggregation semantics. This system contains both traditional Prometheus metrics and the `01.metrics` operational format; do not apply one field model to both.
+- Traditional Prometheus metrics retain their conventional instrument fields and labels. Review counters, gauges, summaries, and histogram buckets according to that instrument's temporality and naming contract.
+- Operational metrics normally use a `scope.name` beginning with `01-metrics/`, `attributes.operation`, and fields such as `metrics.calls`, `metrics.failures`, and `metrics.duration_*`. Consult `references/01-metrics.md` when these fields are present.
+- For operational metrics, `metrics.calls` is the number of operations in the client aggregation bucket, `metrics.failures` is the unsuccessful-operation count, `metrics.duration_max` is the maximum duration in the bucket, and `metrics.duration_avg_calls` is total duration in nanoseconds. `metrics.duration_NN_calls` stores the client percentile multiplied by calls.
+- Operational metrics are emitted as bucket deltas. `SUM(metrics.calls)` across client buckets counts operations over the query window; `MAX(metrics.calls)` selects the busiest client bucket. Choose between them from the alert intent rather than flagging either mechanically.
+- An SDK gauge is encoded specially in the operational format: `metrics.calls` is always `1`, while `metrics.duration_avg_calls`, `metrics.duration_min`, and `metrics.duration_max` carry the actual gauge value. Review gauge queries against the duration field, not `metrics.calls`.
+- Still check duplicate ingestion, client-instance grouping, client aggregation resolution, and whether the query intentionally combines all sources.
 - Prefer `TS` for metric aggregations that need counter handling, per-time-series reduction, or fair aggregation across uneven publish intervals.
-- For counters, raw sums or averages over counter values are usually wrong. Look for `RATE`, `INCREASE`, or another time-series function under `TS`.
+- For traditional cumulative Prometheus counters, raw sums or averages over stored counter values are usually wrong. Look for `RATE`, `INCREASE`, or another time-series function under `TS`.
 - For gauges, confirm whether `MAX`, `MIN`, `AVG_OVER_TIME`, `LAST_OVER_TIME`, or percentile matches the alert's real intent.
 - Check bucket size. Very small buckets can explode result sets; very large buckets can hide spikes or smear incidents.
 - Check whether the query mixes metrics with different dimensional cardinality. Missing dimensions can turn calculations into nulls or misleading totals.

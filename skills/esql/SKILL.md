@@ -1,6 +1,6 @@
 ---
 name: esql
-description: "Review Elastic ES|QL queries for Elasticsearch 9.4/9.5 compatibility, correctness, observability-metrics semantics, alert reliability, and query performance. Use when Codex is asked to inspect, critique, fix, or rewrite ES|QL pipelines, especially Elastic/Kibana alert queries embedded in .yaml/.yml files or standalone .esql queries."
+description: "Review Elastic ES|QL queries for Elasticsearch 9.4/9.5 compatibility, correctness, Prometheus and 01.metrics operational-metric semantics, alert reliability, and query performance. Use when Codex is asked to inspect, critique, fix, or rewrite ES|QL pipelines, especially Elastic/Kibana alert queries embedded in .yaml/.yml files or standalone .esql queries."
 ---
 
 # ES|QL Query Review
@@ -11,8 +11,8 @@ description: "Review Elastic ES|QL queries for Elasticsearch 9.4/9.5 compatibili
 2. Detect the input format before extracting queries:
    - For `.yaml`/`.yml`, parse the YAML and review each ES|QL block scalar such as `query: |`. Read the surrounding alert metadata and comments before reviewing the query.
    - For `.esql`, treat the file as one query unless the user explicitly identifies multiple queries.
-3. Infer the query intent, source grain, time range, whether the alert runner injects the time window, metric type, grouping grain, and alert condition before judging the query. In YAML alerts, use fields such as `name`, `description`, `severity`, `interval_sec`, and `time_window` as part of that contract.
-4. Read `references/review-checklist.md` for any non-trivial review. Read `good-examples.esql` and `bad-examples.esql` when matching this repository's preferred review style or adding new examples. In `bad-examples.esql`, text after `PROBLEM:` or `Problem:` is annotation, not ES|QL.
+3. Infer the query intent, source grain, time range, whether the alert runner injects the time window, metric format and type, grouping grain, and alert condition before judging the query. Distinguish traditional Prometheus metrics from the `01.metrics` operational format before reviewing aggregation semantics. In YAML alerts, use fields such as `name`, `description`, `severity`, `interval_sec`, and `time_window` as part of that contract.
+4. Read `references/review-checklist.md` for any non-trivial review. Read `references/01-metrics.md` when the query uses operational fields such as `metrics.calls`, `metrics.failures`, or `metrics.duration_*`, or when the metric format is ambiguous. Read `good-examples.esql` and `bad-examples.esql` when matching this repository's preferred review style or adding new examples. In `bad-examples.esql`, text after `PROBLEM:` or `Problem:` is annotation, not ES|QL.
 5. Review in passes: syntax/version, source scope, filter placement, aggregation grain, metrics semantics, null and multivalue behavior, arithmetic, alert determinism, result limits, and output shape.
 6. Prefer findings over generic advice. Every finding should name the risky fragment, explain why it matters, and propose a concrete fix or safer rewrite.
 
