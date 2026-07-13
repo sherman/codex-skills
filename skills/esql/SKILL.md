@@ -7,7 +7,7 @@ description: "Review Elastic ES|QL queries for Elasticsearch 9.4/9.5 compatibili
 
 ## Workflow
 
-1. Identify the target Elasticsearch version. If the user says `9.4` or `9.5`, treat exact syntax and behavior as version-sensitive and verify against Elastic docs or a local Elastic checkout before making hard version claims.
+1. Identify the target Elasticsearch version. If the user says `9.4` or `9.5`, treat exact syntax and behavior as version-sensitive and verify against official Elastic docs or matching-version material already supplied inside this project before making hard version claims.
 2. Detect the input format before extracting queries:
    - For `.yaml`/`.yml`, parse the YAML and review each ES|QL block scalar such as `query: |`. Read the surrounding alert metadata and comments before reviewing the query.
    - For `.esql`, treat the file as one query unless the user explicitly identifies multiple queries.
@@ -15,6 +15,12 @@ description: "Review Elastic ES|QL queries for Elasticsearch 9.4/9.5 compatibili
 4. Read `references/review-checklist.md` for any non-trivial review. Read `references/01-metrics.md` when the query uses operational fields such as `metrics.calls`, `metrics.failures`, or `metrics.duration_*`, or when the metric format is ambiguous. Read `good-examples.esql` and `bad-examples.esql` when matching this repository's preferred review style or adding new examples. In `bad-examples.esql`, text after `PROBLEM:` or `Problem:` is annotation, not ES|QL.
 5. Review in passes: syntax/version, source scope, filter placement, aggregation grain, metrics semantics, null and multivalue behavior, arithmetic, alert determinism, result limits, and output shape.
 6. Prefer findings over generic advice. Every finding should name the risky fragment, explain why it matters, and propose a concrete fix or safer rewrite.
+
+## Review Scope
+
+- Keep filesystem inspection inside the current ES|QL project and files explicitly supplied by the user.
+- Do not search sibling repositories, parent workspaces, application code, deployment code, or metric producers to infer undocumented behavior unless the user explicitly asks for that investigation.
+- Use the query, YAML metadata and comments, bundled references, examples, and official Elastic documentation. If these do not establish a data contract, state the assumption or uncertainty in the review instead of searching external code.
 
 ## Review Stance
 
