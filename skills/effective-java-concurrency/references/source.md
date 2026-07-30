@@ -1,14 +1,19 @@
-# Effective Java (2nd ed) source
+# Sources
 
-Primary source for this skill:
+Effective Java source:
 
 - `docs/effective_java.md`
 - Bundled reference (chapter split): `references/10-concurrency.md`
 - Bundled excerpt (monolith): `references/effective_java.md`
 
+Project thread-pool guidance:
+
+- `references/thread-pools.md`
+
 Scope:
 
-- This skill: Items 66-73 (Concurrency)
+- Effective Java Items 66-73 (Concurrency)
+- Thread-pool naming, daemon policy, cached/fixed pool selection, queue capacity, and sizing
 
 Quick navigation:
 

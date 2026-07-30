@@ -191,9 +191,10 @@ ExecutorService possibilities:
 - retrieve the results of tasks one by one as they complete: `ExecutorCompletionService`
   \*...
 
-For more than one thread use a _thread pool_.
-For lightly loaded application, use: `Executors.new-CachedThreadPool`
-For heavily loaded application, use: `Executors.newFixedThreadPool`
+For more than one thread use a _thread pool_. Follow the
+[thread-pool guide](thread-pools.md) when choosing and configuring it: restrict cached pools to
+tests or controlled low-load workloads, and configure fixed-pool queue capacity explicitly with
+`ThreadPoolExecutor` instead of accepting an effectively unbounded queue.
 
 **executor service**: mechanism for executing tasks
 
