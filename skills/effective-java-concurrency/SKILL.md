@@ -1,64 +1,62 @@
 ---
 name: effective-java-concurrency
-description: "Apply Effective Java (2nd edition) concurrency and thread-pool practices when writing or reviewing multi-threaded Java code, executors, or ExecutorService configuration: synchronization/visibility, locking, named ThreadFactory use, daemon policy, cached/fixed pool selection, bounded queues, workload-based pool sizing, concurrency utilities, thread-safety documentation, lazy initialization, and scheduler independence."
+description: "Review, design, and implement Java concurrency involving shared mutable state, synchronization, executors, futures, schedulers, platform threads, or virtual threads. Use for code changes and reviews where thread safety, memory visibility, cancellation, context propagation, executor ownership, overload behavior, lifecycle, or measured concurrency performance matters. Do not use for basic Java explanations without a concrete concurrent code path."
 ---
 
-# Effective Java Concurrency and Thread Pools
+# Java Concurrency Review and Implementation
 
-Use the [Effective Java concurrency reference](references/10-concurrency.md)
-(2nd edition, Items 66-73) for the core checklist. Use the
-[thread-pool reference](references/thread-pools.md) for construction, queueing,
-naming, daemon policy, and sizing.
-If another repo skill sets stricter rules, follow the stricter one.
+Follow project-local instructions, the target JDK, and framework ownership and
+lifecycle contracts before this guidance. Inspect existing concurrency helpers
+and call sites before introducing a new abstraction. When contracts conflict,
+follow the project contract and explain the conflict.
 
-## Quick workflow
+## Workflow
 
-1. Identify all shared mutable state and define the locking/visibility policy.
-2. Prefer not sharing mutable state at all (immutability, confinement, or safe publication).
-3. Prefer high-level concurrency utilities (executors, concurrent collections, synchronizers).
-4. For each owned thread pool, classify its workload, name its threads, choose daemon status explicitly, configure pool/queue sizes, and plan clean shutdown.
-5. Keep synchronized regions small; avoid calling client/overridable code while holding locks.
-6. Document the thread-safety guarantees and any required external locking.
+1. Inspect the build configuration for the target JDK and preview features, then identify the runtime or framework that creates and manages threads.
+2. Map the concurrent path: entry threads, submitted tasks, workers, shared state, downstream limits, task results, cancellation, context, and shutdown owner.
+3. State the invariant and ownership model before choosing synchronization. Prefer immutability, confinement, safe publication, and high-level concurrency utilities.
+4. Classify the workload before selecting platform-thread pools, virtual threads, or an existing async execution model. Do not migrate execution models without a requested or measured benefit.
+5. Analyze steady state, saturation, failure, cancellation, interruption, and shutdown. Do not review only the successful path.
+6. Make the narrowest target-JDK-compatible change and document externally visible thread-safety and lifecycle guarantees.
+7. Verify correctness deterministically; measure throughput changes under representative load.
 
-## Checklist by item (66-73)
+## Route the task
 
-- 66: Synchronize access to shared mutable data (mutual exclusion + visibility); use `volatile` only for visibility; use atomics for atomic updates.
-- 67: Avoid excessive synchronization; do as little work as possible under lock; use open calls (move alien method calls outside locks).
-- 68: Prefer executors and tasks to threads; apply the thread-pool checklist below; shut down executors cleanly.
-- 69: Prefer concurrency utilities to `wait`/`notify`; use concurrent collections and synchronizers; if you must, use the wait-loop idiom and prefer `notifyAll`.
-- 70: Document thread safety (immutable / unconditionally thread-safe / conditionally thread-safe / not thread-safe / thread-hostile); document which lock guards which state.
-- 71: Use lazy initialization judiciously; prefer eager init; otherwise use holder idiom (static), synchronized accessors, or double-check idiom with `volatile`.
-- 72: Do not depend on the thread scheduler for correctness or performance; avoid busy-wait and oversubscription.
-- 73: Avoid thread groups (obsolete).
+Load only the references needed for the concrete path:
 
-## Thread-pool checklist
+- Read [Shared state and synchronization](references/shared-state.md) for visibility, atomicity, locking, publication, lazy initialization, concurrent collections, or thread-safety contracts.
+- Read [Executors and virtual threads](references/thread-pools.md) for executor construction, queueing, saturation, rejection, sizing, virtual-thread selection, or shutdown.
+- Read [Task lifecycle and context](references/tasks-and-context.md) for `Future`, `CompletableFuture`, scheduled work, failure, cancellation, interruption, `ThreadLocal`, MDC, security, or tracing context.
+- Read [Review and verification](references/review-and-testing.md) for code review, diagnostics, stress testing, or performance work.
 
-Read the [thread-pool reference](references/thread-pools.md) before creating,
-reconfiguring, or reviewing a thread pool.
+## Review discipline
 
-- Supply a `ThreadFactory` for owned pools and give threads a descriptive, pool-specific name with a sequence number.
-- Use daemon threads only for work that may stop at any point without harming the application or operating system. Do not rely on daemon threads to finish I/O or execute required `finally` cleanup.
-- Restrict cached pools to tests or controlled, low-load workloads. Do not use them for high load or uncontrolled task submission because the thread count can keep growing.
-- Configure fixed-pool queue capacity explicitly with `ThreadPoolExecutor`; do not accept the effectively unbounded queue from `Executors.newFixedThreadPool()` when queued work can accumulate.
-- Before sizing an executor, choose the execution model. On JDK 21+, prefer one virtual thread per task for workloads with many blocking operations; do not pool virtual threads or apply the `W/C` formula to them.
-- For platform-thread pools, size pools and queues from measured workload behavior and service limits. Treat the reference formulas as starting estimates, then verify them with profiling and load tests.
-- Keep CPU-bound and nonblocking-async platform-thread pools near the available core count. Allow more platform threads for blocking I/O according to the measured wait-to-compute ratio.
-- Consider a `SynchronousQueue` when downstream capacity already limits concurrency and buffering additional work provides no value.
+- Trace an actual concurrent path and establish the violated invariant, happens-before relation, ownership rule, or capacity contract before reporting a finding.
+- Report the exact location, triggering interleaving or state, consequence, and narrow remedy. Distinguish correctness defects from throughput risks and optional hardening.
+- Treat search matches as leads, not findings. Check framework defaults, injected-resource ownership, target-JDK behavior, and downstream admission controls.
+- Do not infer an API promise solely from its return type. For example, returning `CompletionStage` does not by itself prove that executor rejection must be encoded as a failed stage rather than thrown synchronously.
+- Avoid blanket findings. An unbounded queue can be intentional, a missing virtual-thread name is not inherently a defect, and an extra semaphore is not automatically useful when an existing resource already limits concurrency.
 
-## Common red flags
+## Implementation discipline
 
-- Unsynchronized read/write of shared mutable fields (especially "write without synchronization, read with synchronization" or vice versa).
-- `volatile` used for non-atomic compound actions (e.g., `++`).
-- Calling callbacks / overridable methods while holding a lock.
-- Unbounded thread creation or "new Thread(...)" in library code instead of an executor.
-- Anonymous/default pool thread names that make thread dumps hard to attribute.
-- Daemon workers performing required I/O or cleanup.
-- Cached pools receiving uncontrolled work, or fixed pools using an implicit effectively unbounded queue.
-- Pool or queue sizes selected without workload measurements and service constraints.
-- `wait()` or `notify()` used outside the standard wait-loop idiom.
+- Guard every access participating in a shared invariant with one consistent policy. Use `volatile` for visibility, not compound atomicity.
+- Keep lock scope small, use a stable private lock where practical, and do not invoke unknown callbacks or blocking I/O while holding it.
+- Treat interruption as cooperative cancellation: propagate it or restore interrupt status when an API boundary cannot throw it.
+- Shut down only executors the component owns. Prefer a repository lifecycle helper such as `ExecutorShutdownAgent` only after checking its implementation and existing call sites; a helper name is not proof that its contract fits. Otherwise use the JDK two-phase shutdown pattern.
+- When forced shutdown removes queued tasks, trace caller-visible `Future` objects and ensure they reach a terminal state instead of leaving `get()` blocked forever.
+- Preserve the established thread-safety, exception, rejection, context-propagation, and lifecycle contracts unless the task explicitly changes them.
 
-## References
+## Deliver the result
 
-- Shared state, synchronization, executors, and thread safety: [Effective Java Items 66-73](references/10-concurrency.md)
-- Thread-pool construction and sizing: [Thread pool best practices](references/thread-pools.md)
-- Reference provenance and edition notes: [Sources](references/source.md)
+For a review, list actionable findings first in severity order. Include the
+concurrent path and evidence for each finding, then state verification gaps. If
+no contract is violated, say so instead of manufacturing a recommendation.
+
+For an implementation, include focused tests or measurements and state any
+target-JDK, ownership, or workload assumption that materially affects the
+design.
+
+## Sources
+
+Use [Sources and provenance](references/source.md) only when checking editions
+or primary documentation.
