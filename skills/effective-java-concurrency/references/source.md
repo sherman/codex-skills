@@ -1,22 +1,17 @@
 # Sources
 
-Effective Java source:
+## Effective Java concurrency
 
-- `docs/effective_java.md`
-- Bundled reference (chapter split): `references/10-concurrency.md`
-- Bundled excerpt (monolith): `references/effective_java.md`
+- Bundled reference: [Items 66-73](10-concurrency.md)
+- Edition: 2nd edition
+- Original summary: [HugoMatilla/Effective-JAVA-Summary](https://github.com/HugoMatilla/Effective-JAVA-Summary)
 
-Project thread-pool guidance:
+## Thread-pool guidance
 
-- `references/thread-pools.md`
+- Bundled reference: [Thread pool best practices](thread-pools.md)
+- The Item 80 citation in that reference uses Effective Java 3rd-edition numbering.
 
-Scope:
+## Scope
 
 - Effective Java Items 66-73 (Concurrency)
 - Thread-pool naming, daemon policy, cached/fixed pool selection, queue capacity, and sizing
-
-Quick navigation:
-
-- Jump to an item: `rg -n '^## 66\\.' docs/effective_java.md`
-- Jump to the concurrency chapter: `rg -n '^# 10\\.' docs/effective_java.md`
-- List all items: `rg -n '^## [0-9]+\\.' docs/effective_java.md`

@@ -1,12 +1,13 @@
-<!-- Space: Search -->
-<!-- Parent: Runtime Team -->
-<!-- Parent: Conventions -->
-<!-- Parent: Java -->
-<!-- Title: Thread pool best practices -->
-
-<!-- Include: ../../resources/disclaimer.md -->
-
 # Thread pool best practices
+
+## Содержание
+
+- [TL;DR](#tldr)
+- [Именованные thread pools](#именованные-thread-pools)
+- [Потоки-демоны](#потоки-демоны)
+- [Cached thread pool](#cached-thread-pool)
+- [Fixed thread pool](#fixed-thread-pool)
+- [Размер thread pool](#размер-thread-pool)
 
 ## TL;DR
 * Всегда передавайте в конструктор создания thread pool фабрику [ThreadFactory](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ThreadFactory.html).
@@ -41,7 +42,7 @@ ExecutorService executor = Executors.newFixedThreadPool(
 ### Ссылки
 * Concurrency In Practice (8.3.4)
 
-## Потоки демоны
+## Потоки-демоны
 
 ### Мотивация
 Хорошие примеры для потока-демона.
@@ -62,9 +63,9 @@ ExecutorService executor = Executors.newFixedThreadPool(
 Если количество задач больше, чем может обслужить сервер в единицу времени, количество потоков будет расти и ситуация будет еще больше ухудшаться.
 
 ### Ссылки
-* Effective java (Item 80).
+* Effective Java, 3rd edition (Item 80).
 
-### Fixed thread pool
+## Fixed thread pool
 
 ### Снипет
 ```java
@@ -143,13 +144,13 @@ threads = core_num * cpu_util_coefficient * (1 + W/C)
 
 *W/C* - соотношение времени ожидания (I/O, ожидание захвата монитора и статусы потоков WAITING/TIMED_WAITING) к времени вычислений (CPU)
 
-#### Пример 1.
+### Пример 1.
 У нас есть микро-сервис, который отвечает за 100 миллисекунд, при этом сами вычисления занимают 5 миллисекунд (мы поняли это по профайлеру, например). Всего 16 ядер. И мы хотим, чтобы утилизация cpu была не выше 30%.
 ```
 16 * 0.3 * (1 + 100/5) = 100 тредов.
 ```
 Так много тредов получается, потому что у нас время ожидания много больше времени вычисления.
-#### Пример 2.
+### Пример 2.
 У нас есть микро-сервис, который отвечает за 5 миллисекунд (чтение только из памяти), при этом сами вычисления занимают 3 миллисекунды. Всего 16 ядер. И мы хотим, чтобы утилизация cpu была не выше 40%.
 ```
 16 * 0.4 * (1 + 5/3) = 17 тредов.

@@ -5,9 +5,10 @@ description: "Apply Effective Java (2nd edition) concurrency and thread-pool pra
 
 # Effective Java Concurrency and Thread Pools
 
-Use `docs/effective_java.md` (Bloch, Effective Java 2nd edition, Items 66-73) for
-the core concurrency checklist. Use `references/thread-pools.md` for thread-pool
-construction, queueing, naming, daemon policy, and sizing.
+Use the [Effective Java concurrency reference](references/10-concurrency.md)
+(2nd edition, Items 66-73) for the core checklist. Use the
+[thread-pool reference](references/thread-pools.md) for construction, queueing,
+naming, daemon policy, and sizing.
 If another repo skill sets stricter rules, follow the stricter one.
 
 ## Quick workflow
@@ -32,7 +33,8 @@ If another repo skill sets stricter rules, follow the stricter one.
 
 ## Thread-pool checklist
 
-Read `references/thread-pools.md` before creating, reconfiguring, or reviewing a thread pool.
+Read the [thread-pool reference](references/thread-pools.md) before creating,
+reconfiguring, or reviewing a thread pool.
 
 - Supply a `ThreadFactory` for owned pools and give threads a descriptive, pool-specific name with a sequence number.
 - Use daemon threads only for work that may stop at any point without harming the application or operating system. Do not rely on daemon threads to finish I/O or execute required `finally` cleanup.
@@ -54,21 +56,8 @@ Read `references/thread-pools.md` before creating, reconfiguring, or reviewing a
 - Pool or queue sizes selected without workload measurements and service constraints.
 - `wait()` or `notify()` used outside the standard wait-loop idiom.
 
-## Getting the full details quickly
+## References
 
-For thread-pool construction and sizing, open:
-
-- `.codex/skills/effective-java-concurrency/references/thread-pools.md`
-
-For Effective Java Items 66-73, open:
-
-- `.codex/skills/effective-java-concurrency/references/10-concurrency.md`
-
-Legacy (large, avoid loading unless you truly need everything at once):
-
-- `.codex/skills/effective-java-concurrency/references/effective_java.md`
-
-You can also search the repo source summary:
-
-- File: `docs/effective_java.md`
-- Find a specific item: `rg -n '^## 66\\.' docs/effective_java.md`
+- Shared state, synchronization, executors, and thread safety: [Effective Java Items 66-73](references/10-concurrency.md)
+- Thread-pool construction and sizing: [Thread pool best practices](references/thread-pools.md)
+- Reference provenance and edition notes: [Sources](references/source.md)
