@@ -21,13 +21,15 @@
 ## Именованные thread pools
 
 ### Снипет
+
+Для Java 21 и новее:
+
 ```java
-ExecutorService executor = Executors.newFixedThreadPool(
-        4,
-        new ThreadFactoryBuilder()
-                .setNameFormat("CoreExecutor-%d")
-                .build()
-);
+ThreadFactory threadFactory = Thread.ofPlatform()
+        .name("CoreExecutor-", 0)
+        .factory();
+
+ExecutorService executor = Executors.newFixedThreadPool(4, threadFactory);
 ```
 
 ### Мотивация
@@ -68,16 +70,21 @@ ExecutorService executor = Executors.newFixedThreadPool(
 ## Fixed thread pool
 
 ### Снипет
+
+Для Java 21 и новее:
+
 ```java
+ThreadFactory threadFactory = Thread.ofPlatform()
+    .name("CoreExecutor-", 0)
+    .factory();
+
 ExecutorService executor = new ThreadPoolExecutor(
     4,
     4,
     0L,
     TimeUnit.MILLISECONDS,
     new LinkedBlockingQueue<>(1024),
-    new ThreadFactoryBuilder()
-        .setNameFormat("CoreExecutor-%d")
-        .build()
+    threadFactory
 );
 ```
 
