@@ -40,8 +40,9 @@ reconfiguring, or reviewing a thread pool.
 - Use daemon threads only for work that may stop at any point without harming the application or operating system. Do not rely on daemon threads to finish I/O or execute required `finally` cleanup.
 - Restrict cached pools to tests or controlled, low-load workloads. Do not use them for high load or uncontrolled task submission because the thread count can keep growing.
 - Configure fixed-pool queue capacity explicitly with `ThreadPoolExecutor`; do not accept the effectively unbounded queue from `Executors.newFixedThreadPool()` when queued work can accumulate.
-- Size pools and queues from measured workload behavior and service limits. Treat the reference formulas as starting estimates, then verify them with profiling and load tests.
-- Keep CPU-bound and nonblocking-async pools near the available core count. Allow more threads for blocking I/O according to the measured wait-to-compute ratio.
+- Before sizing an executor, choose the execution model. On JDK 21+, prefer one virtual thread per task for workloads with many blocking operations; do not pool virtual threads or apply the `W/C` formula to them.
+- For platform-thread pools, size pools and queues from measured workload behavior and service limits. Treat the reference formulas as starting estimates, then verify them with profiling and load tests.
+- Keep CPU-bound and nonblocking-async platform-thread pools near the available core count. Allow more platform threads for blocking I/O according to the measured wait-to-compute ratio.
 - Consider a `SynchronousQueue` when downstream capacity already limits concurrency and buffering additional work provides no value.
 
 ## Common red flags

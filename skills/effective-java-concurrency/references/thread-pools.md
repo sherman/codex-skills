@@ -8,6 +8,7 @@
 - [Cached thread pool](#cached-thread-pool)
 - [Fixed thread pool](#fixed-thread-pool)
 - [Размер thread pool](#размер-thread-pool)
+- [Virtual threads](#virtual-threads)
 
 ## TL;DR
 * Всегда передавайте в конструктор создания thread pool фабрику [ThreadFactory](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ThreadFactory.html).
@@ -22,7 +23,7 @@
 
 ### Снипет
 
-Для Java 21 и новее:
+Для JDK 21 и выше:
 
 ```java
 ThreadFactory threadFactory = Thread.ofPlatform()
@@ -71,7 +72,7 @@ ExecutorService executor = Executors.newFixedThreadPool(4, threadFactory);
 
 ### Снипет
 
-Для Java 21 и новее:
+Для JDK 21 и выше:
 
 ```java
 ThreadFactory threadFactory = Thread.ofPlatform()
@@ -168,3 +169,45 @@ W = 5 - 3 = 2 миллисекунды
 
 ### Ссылки
 * Concurrency In Practice (8.2)
+
+## Virtual threads
+
+Начиная с JDK 21 можно использовать виртуальные потоки (virtual threads) для blocking I/O и писать простой синхронный код. Они повышают throughput приложения, но не уменьшают latency отдельной задачи. Virtual threads подходят для большого количества задач, которые проводят основное время в ожидании, но не для длительных CPU-bound вычислений.
+
+Примеры использования virtual threads в коде:
+
+* Запросы в базу данных
+* Вызовы другого сервиса по сети
+* Модель приложения thread per request
+
+### Создание virtual threads
+
+Не объединяйте virtual threads в пул и не применяйте к ним формулу `W/C`. Создавайте отдельный virtual thread для каждой concurrent-задачи:
+
+```java
+Report loadReport() throws InterruptedException, ExecutionException {
+    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+        var customer = executor.submit(this::loadCustomer);
+        var orders = executor.submit(this::loadOrders);
+
+        return new Report(customer.get(), orders.get());
+    }
+}
+```
+
+Оба blocking-вызова выполняются конкурентно, каждый в отдельном virtual thread. Если нужны именованные потоки, передайте `Thread.ofVirtual().name("Request-", 0).factory()` в `Executors.newThreadPerTaskExecutor(...)`.
+
+### Совместимость JDK
+
+Подводные камни:
+
+| Версия JDK | Проблема                                                                                                             |
+|:-----------|:---------------------------------------------------------------------------------------------------------------------|
+| JDK 21-23  | Блокировка внутри `synchronized`, ожидание монитора и выполнение native/FFM-кода могут пинить carrier thread           |
+| JDK 24+    | `synchronized` больше не пинит carrier thread; выполнение native-метода или foreign function все еще может это сделать |
+
+### Ссылки
+
+* [Oracle: Virtual Threads](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
+* [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)
+* [JEP 491: Synchronize Virtual Threads without Pinning](https://openjdk.org/jeps/491)
